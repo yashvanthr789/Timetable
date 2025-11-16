@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="dashboard-container" id="studentDashboard">
+        <button class="hamburger-menu" id="hamburgerMenu"><i class="fas fa-bars"></i></button>
+
+        <aside class="sidebar" id="sidebar">
+            <h3><i class="fas fa-user-graduate" style="margin-right: 8px;"></i>Student Portal</h3>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#" class="nav-link active" data-section="home"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="#" class="nav-link" data-section="my-timetable"><i class="fas fa-calendar-alt"></i> My Timetable</a></li>
+                    <li><a href="#" class="nav-link" data-section="my-attendance"><i class="fas fa-chart-pie"></i> My Attendance</a></li>
+                    <li><a href="#" class="nav-link" data-section="notifications"><i class="fas fa-bell"></i> Notifications</a></li>
+                    <li><a href="#" class="nav-link" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div>
+                    <h1><i class="fas fa-user-graduate" style="margin-right: 12px; font-size: 1.8rem;"></i>Student Dashboard</h1>
+                    <div id="breadcrumbContainer" class="breadcrumb-container">
+                        <a href="#" onclick="showSection('home'); return false;"><i class="fas fa-home"></i> Home</a>
+                        <span class="breadcrumb-separator">›</span>
+                        <span class="breadcrumb-current"><i class="fas fa-home"></i> Home</span>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <button id="darkModeToggle" class="dark-mode-toggle" title="Toggle Dark Mode">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <div class="profile-dropdown">
+                        <div id="profileTrigger" class="profile-trigger">
+                            <span id="loggedInUsername"></span>
+                            <img src="https://via.placeholder.com/45/2196F3/FFFFFF?text=S" alt="Student Avatar">
+                            <i class="fas fa-chevron-down" style="font-size: 0.8rem;"></i>
+                        </div>
+                        <div id="profileMenu" class="profile-menu">
+                            <a href="#" class="profile-menu-item">
+                                <i class="fas fa-user"></i>
+                                <span>View Profile</span>
+                            </a>
+                            <a href="#" class="profile-menu-item">
+                                <i class="fas fa-cog"></i>
+                                <span>Settings</span>
+                            </a>
+                            <a href="#" id="profileLogout" class="profile-menu-item">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <section id="home-section" class="content-section active">
+                <h2><i class="fas fa-home" style="margin-right: 10px;"></i>Welcome, Student!</h2>
+                <p>View your personalized timetable and attendance records.</p>
+                <div class="mt-20">
+                    <h3>Quick Access</h3>
+                    <button class="btn-primary" onclick="showSection('my-timetable')"><i class="fas fa-calendar-alt"></i> View My Timetable</button>
+                    <button class="btn-secondary" onclick="showSection('my-attendance')"><i class="fas fa-chart-pie"></i> Check My Attendance</button>
+                </div>
+            </section>
+
+            <section id="my-timetable-section" class="content-section hidden">
+                <h2><i class="fas fa-calendar-alt" style="margin-right: 10px;"></i>My Timetable</h2>
+                <p>Here is your current class schedule.</p>
+                <div class="mt-20">
+                    <div class="form-group" style="max-width: 300px;">
+                        <label for="timetableFilterDay"><i class="fas fa-filter" style="margin-right: 8px;"></i>Filter by Day:</label>
+                        <select id="timetableFilterDay" class="mb-20">
+                            <option value="all">All Days</option>
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday">Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
+                            <option value="Saturday">Saturday</option>
+                            <option value="Sunday">Sunday</option>
+                        </select>
+                    </div>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Course</th>
+                            <th>Teacher</th>
+                            <th>Day</th>
+                            <th>Time</th>
+                            <th>Room</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentTimetableBody">
+                        <!-- Student-specific timetable entries will be loaded here -->
+                        <tr><td colspan="5" class="text-center">Loading your timetable...</td></tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="my-attendance-section" class="content-section hidden">
+                <h2><i class="fas fa-chart-pie" style="margin-right: 10px;"></i>My Attendance</h2>
+                <p>Track your attendance percentage for each course.</p>
+                <div class="mt-20">
+                    <p class="mb-20" style="font-size: 1.2rem; padding: 15px; background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); border-radius: 12px;">
+                        Overall Attendance: <strong id="overallAttendancePercentage" style="color: #667eea; font-size: 1.4rem;">--%</strong>
+                    </p>
+                    <h3>Attendance by Course</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Total Classes</th>
+                                <th>Classes Attended</th>
+                                <th>Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentAttendanceBody">
+                            <!-- Student-specific attendance data will be loaded here -->
+                            <tr><td colspan="4" class="text-center">Loading attendance data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="notifications-section" class="content-section hidden">
+                <h2><i class="fas fa-bell" style="margin-right: 10px;"></i>Notifications</h2>
+                <p>Important updates and announcements will appear here.</p>
+                <ul id="studentNotificationsList" class="mt-20">
+                    <!-- Student-specific notifications will appear here -->
+                    <li><small>[2023-10-27 10:00]</small> <strong>Admin:</strong> Welcome to the new timetable system!</li>
+                </ul>
+            </section>
+        </main>
+    </div>
+
+    <div class="notifications-container" id="toastNotifications">
+        <!-- Toast notifications will appear here -->
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="fab-container">
+        <button id="fabMain" class="fab-main">
+            <i class="fas fa-plus"></i>
+        </button>
+        <div id="fabOptions" class="fab-options">
+            <!-- FAB options will be generated by JS based on role -->
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="common.js"></script>
+    <script src="js/ui-enhancements.js"></script>
+    <script src="student.js"></script>
+</body>
+</html>
