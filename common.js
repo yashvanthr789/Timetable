@@ -1,32 +1,97 @@
 // Common functionality for all dashboard pages
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Check authentication
-    checkAuthentication();
-    
-    // Initialize dashboard
+const API_BASE_URL = window.API_BASE_URL || 'http://localhost:5000';
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const isAuthenticated = await checkAuthentication();
+    if (!isAuthenticated) return;
     initializeDashboard();
+    initSocketIO();
 });
 
+async function apiFetch(endpoint, options = {}) {
+    const token = localStorage.getItem('jwt_token');
+    const headers = options.headers || {};
+
+    if (!(options && options.skipAuth)) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    if (!headers['Content-Type'] && !(options && options.formData)) {
+        headers['Content-Type'] = 'application/json';
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            ...options,
+            headers,
+        });
+
+        if (response.status === 401) {
+            handleUnauthorized();
+            throw new Error('Unauthorized');
+        }
+
+        // Handle non-JSON responses
+        const contentType = response.headers.get('content-type');
+        let data;
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            const text = await response.text();
+            throw new Error(text || 'Request failed');
+        }
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Request failed');
+        }
+        return data;
+    } catch (error) {
+        if (error instanceof TypeError) {
+            throw new Error('Network error: Unable to connect to server. Please check if the backend is running.');
+        }
+        throw error;
+    }
+}
+
+// Make apiFetch available globally
+window.apiFetch = apiFetch;
+
+function handleUnauthorized() {
+    localStorage.removeItem('jwt_token');
+    localStorage.removeItem('user_role');
+    localStorage.removeItem('username');
+    window.location.href = 'index.html';
+}
+
 // Check if user is authenticated
-function checkAuthentication() {
+async function checkAuthentication() {
     const token = localStorage.getItem('jwt_token');
     const userRole = localStorage.getItem('user_role');
     
     if (!token || !userRole) {
         // Redirect to login if not authenticated
-        window.location.href = 'index.html';
+        handleUnauthorized();
         return false;
     }
-    
-    // Display username
-    const username = localStorage.getItem('username') || 'User';
-    const usernameElement = document.getElementById('loggedInUsername');
-    if (usernameElement) {
-        usernameElement.textContent = username;
+
+    try {
+        const data = await apiFetch('/auth/me');
+        const user = data.user;
+        if (user) {
+            localStorage.setItem('username', user.name);
+            localStorage.setItem('user_role', user.role);
+            window.currentUser = user;
+            const usernameElement = document.getElementById('loggedInUsername');
+            if (usernameElement) {
+                usernameElement.textContent = user.name;
+            }
+        }
+        return true;
+    } catch (error) {
+        console.error('Auth check failed:', error);
+        handleUnauthorized();
+        return false;
     }
-    
-    return true;
 }
 
 // Initialize dashboard features
@@ -104,20 +169,33 @@ function showSection(sectionName) {
 // Setup logout functionality
 function setupLogout() {
     const logoutBtn = document.getElementById('logoutBtn');
+    const profileLogout = document.getElementById('profileLogout');
     
+    // Sidebar logout
     if (logoutBtn) {
         logoutBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            
-            // Clear authentication data
-            localStorage.removeItem('jwt_token');
-            localStorage.removeItem('user_role');
-            localStorage.removeItem('username');
-            
-            // Redirect to role selection page
-            window.location.href = 'index.html';
+            performLogout();
         });
     }
+    
+    // Profile dropdown logout
+    if (profileLogout) {
+        profileLogout.addEventListener('click', (e) => {
+            e.preventDefault();
+            performLogout();
+        });
+    }
+}
+
+function performLogout() {
+    // Clear authentication data
+    localStorage.removeItem('jwt_token');
+    localStorage.removeItem('user_role');
+    localStorage.removeItem('username');
+    
+    // Redirect to role selection page
+    window.location.href = 'index.html';
 }
 
 // Toast notification function
@@ -148,4 +226,36 @@ function showToast(message, type = 'info') {
 
 // Make showSection available globally for onclick handlers
 window.showSection = showSection;
+
+// Safe Socket.IO initialization
+function initSocketIO() {
+    if (typeof io === 'undefined') {
+        console.log('Socket.io not loaded, skipping real-time features');
+        return;
+    }
+
+    try {
+        const socket = io(API_BASE_URL, {
+            autoConnect: false,
+            reconnection: true,
+            reconnectionAttempts: 3,
+            timeout: 5000
+        });
+
+        socket.on('connect_error', (error) => {
+            console.log('Socket.io connection unavailable, using polling mode');
+        });
+
+        socket.on('connect', () => {
+            console.log('Socket.io connected');
+        });
+
+        // Attempt to connect
+        socket.connect();
+
+        window.socket = socket;
+    } catch (error) {
+        console.log('Socket.io initialization skipped');
+    }
+}
 

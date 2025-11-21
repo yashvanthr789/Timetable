@@ -1,0 +1,24 @@
+{
+  "name": "timetable-management",
+  "version": "1.0.0",
+  "description": "Frontend shell for the Timetable Management System",
+  "private": true,
+  "scripts": {
+    "install:backend": "npm --prefix backend install",
+    "start": "npm --prefix backend start",
+    "dev": "npm --prefix backend run dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yashvanthr789/Timetable.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/yashvanthr789/Timetable/issues"
+  },
+  "homepage": "https://github.com/yashvanthr789/Timetable#readme",
+  "main": "index.js"
+}

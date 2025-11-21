@@ -1,3 +1,5 @@
+const API_BASE_URL = window.API_BASE_URL || 'http://localhost:5000';
+
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('loginForm');
     const usernameInput = document.getElementById('username');
@@ -22,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     roleIndicator.style.fontWeight = '600';
     roleIndicator.style.marginBottom = '20px';
 
-    loginForm.addEventListener('submit', (e) => {
+    loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const username = usernameInput.value;
@@ -34,62 +36,49 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Admin authentication - real validation required
-        if (role === 'admin') {
-            const adminUsername = 'yashvanthr';
-            const adminPassword = 'yashu990@';
-            
-            if (username !== adminUsername || password !== adminPassword) {
-                showError('Invalid Admin Credentials!');
-                return;
+        try {
+            usernameInput.disabled = true;
+            passwordInput.disabled = true;
+            loginForm.classList.add('loading');
+
+            const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password }),
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.message || 'Invalid credentials');
             }
+
+            if (data.user.role !== role) {
+                throw new Error(`You are registered as ${data.user.role}. Please login with the correct role.`);
+            }
+
+            localStorage.setItem('jwt_token', data.token);
+            localStorage.setItem('user_role', data.user.role);
+            localStorage.setItem('username', data.user.name);
+
+            // Show loader
+            const loader = document.createElement('div');
+            loader.className = 'page-loader';
+            loader.innerHTML = '<div class="loader-spinner"></div>';
+            document.body.appendChild(loader);
+
+            setTimeout(() => {
+                window.location.href = `${role}.html`;
+            }, 700);
+        } catch (error) {
+            console.error('Login error:', error);
+            showError(error.message || 'Login failed. Please try again.');
+        } finally {
+            usernameInput.disabled = false;
+            passwordInput.disabled = false;
+            loginForm.classList.remove('loading');
         }
-        // Teacher and Student continue with dummy login (no validation)
-
-        // Simulate login (replace with actual fetch to backend)
-        console.log('Attempting login with:', { username, password, role });
-
-        // Placeholder for fetch API
-        // fetch('/api/login', {
-        //     method: 'POST',
-        //     headers: {
-        //         'Content-Type': 'application/json'
-        //     },
-        //     body: JSON.stringify({ username, password, role })
-        // })
-        // .then(response => response.json())
-        // .then(data => {
-        //     if (data.success) {
-        //         localStorage.setItem('jwt_token', data.token); // Store JWT
-        //         localStorage.setItem('user_role', role);
-        //         window.location.href = `/${role}.html`;
-        //     } else {
-        //         showError(data.message || 'Login failed. Invalid credentials.');
-        //     }
-        // })
-        // .catch(error => {
-        //     console.error('Login error:', error);
-        //     showError('An error occurred during login. Please try again.');
-        // });
-
-        // --- SIMULATED SUCCESSFUL LOGIN FOR DEMO ---
-        // In a real app, you'd get a token from the backend after successful auth
-        const dummyToken = 'your_dummy_jwt_token_for_' + role;
-        localStorage.setItem('jwt_token', dummyToken);
-        localStorage.setItem('user_role', role); // Store the role
-        localStorage.setItem('username', username); // Store username for display
-
-        // Show loader
-        const loader = document.createElement('div');
-        loader.className = 'page-loader';
-        loader.innerHTML = '<div class="loader-spinner"></div>';
-        document.body.appendChild(loader);
-
-        // Redirect to respective dashboard after 0.7s
-        setTimeout(() => {
-            window.location.href = `${role}.html`;
-        }, 700);
-        // --- END SIMULATED LOGIN ---
     });
 
     function showError(message) {

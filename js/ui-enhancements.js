@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initFAB();
     initBreadcrumbs();
     initContentAnimations();
+    initProfileDropdown();
 
 });
 
@@ -120,10 +121,15 @@ function initContentAnimations() {
 
     sections.forEach(section => {
         // Add animation only when section becomes active
+        let isAnimating = false;
         const observer = new MutationObserver((mutations) => {
-            if (section.classList.contains("active")) {
+            if (section.classList.contains("active") && !isAnimating) {
+                isAnimating = true;
                 section.classList.add("fade-in");
-                setTimeout(() => section.classList.remove("fade-in"), 400);
+                setTimeout(() => {
+                    section.classList.remove("fade-in");
+                    isAnimating = false;
+                }, 400);
             }
         });
 
@@ -136,7 +142,50 @@ function initContentAnimations() {
 }
 
 /* ======================================================
-   E) MICRO-INTERACTIONS (Lightweight, No Loops)
+   E) PROFILE DROPDOWN
+   ====================================================== */
+
+function initProfileDropdown() {
+    const profileTrigger = document.getElementById("profileTrigger");
+    const profileMenu = document.getElementById("profileMenu");
+    
+    if (!profileTrigger || !profileMenu) return;
+
+    // Toggle on click
+    profileTrigger.addEventListener("click", (e) => {
+        e.stopPropagation();
+        profileMenu.classList.toggle("active");
+    });
+
+    // Close on outside click
+    document.addEventListener("click", (e) => {
+        if (!profileTrigger.contains(e.target) && !profileMenu.contains(e.target)) {
+            profileMenu.classList.remove("active");
+        }
+    });
+
+    // Close on ESC key
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            profileMenu.classList.remove("active");
+        }
+    });
+
+    // Handle profile logout button
+    const profileLogout = document.getElementById("profileLogout");
+    if (profileLogout) {
+        profileLogout.addEventListener("click", (e) => {
+            e.preventDefault();
+            localStorage.removeItem('jwt_token');
+            localStorage.removeItem('user_role');
+            localStorage.removeItem('username');
+            window.location.href = 'index.html';
+        });
+    }
+}
+
+/* ======================================================
+   F) MICRO-INTERACTIONS (Lightweight, No Loops)
    ====================================================== */
 
 document.addEventListener("mouseover", (e) => {
